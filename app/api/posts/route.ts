@@ -1,15 +1,14 @@
-// pages/api/posts/create.ts
-
-import { createPost } from '../../../lib/posts'; // server-side code
 import { NextResponse } from 'next/server';
-import { Guest, Like, Post,Comment} from '@/lib/models';
+import { Guest, Like, Post, Comment } from '@/lib/models';
+import { sendPostLikeNotification } from '@/lib/firebase-admin';
+import { getSession } from '@/lib/auth-server';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    console.log(body)
     const { type, ...payload } = body;
-    switch(type) {
+
+    switch (type) {
       case 'create-post': {
         const { content, wedding_event_id, guest_id, video_url, image_url } = payload;
         const post = await Post.create({
@@ -19,61 +18,137 @@ export async function POST(req: Request) {
           guest_id,
           wedding_event_id,
         });
-        return NextResponse.json({
-          postId: post.id,
-          guestId: post.guest_id,
-        });
-      }
-    case 'get-posts': {
-      const {wedding_event_id,guest_id}  = payload;
-  const posts = await Post.findAll({
-    where: { wedding_event_id },
-    include: [
-      {
-        model: Guest,
-        attributes: ['name', 'avatar_url'],
-      },
-      {
-        model: Comment,
-        separate: true,
-      },
-      {
-        model: Like,
-        where: { guest_id },
-        required: false,
-      },
-    ],
-    order: [['createdAt', 'DESC']],
-  });
 
-  return NextResponse.json(posts);
+        const postWithGuest = await Post.findByPk(post.id, {
+          include: [{
+            model: Guest,
+            attributes: ['id', 'name', 'avatar_url'],
+          }],
+        });
+
+        // Trigger real-time update
+        // await pusher.trigger(`wedding-${wedding_event_id}`, 'post-created', {
+        //   post: postWithGuest?.toJSON(),
+        // });
+
+        return NextResponse.json(postWithGuest);
+      }
+
+      case 'get-posts': {
+        const { wedding_event_id, guest_id } = payload;
+        const posts = await Post.findAll({
+          where: { wedding_event_id },
+          include: [
+            {
+              model: Guest,
+              attributes: ['id', 'name', 'avatar_url'],
+            },
+            {
+              model: Comment,
+              include: [{
+                model: Guest,
+                attributes: ['id', 'name', 'avatar_url'],
+              }]
+            },
+            {
+              model: Like,
+              include: [{
+                model: Guest,
+                attributes: ['id', 'name', 'avatar_url'],
+              }]
+            },
+          ],
+          order: [['createdAt', 'DESC']],
+        });
+
+        return NextResponse.json(posts);
+      }
+
+      case 'add-comment': {
+        const { post_id, guest_id, content } = payload;
+        const comment = await Comment.create({
+          content,
+          guest_id,
+          post_id,
+        });
+
+        const commentWithGuest = await Comment.findByPk(comment.id, {
+          include: [
+            {
+              model: Guest,
+              attributes: ['id', 'name', 'avatar_url'],
+            },
+            {
+              model: Post,
+              attributes: ['wedding_event_id'],
+            },
+          ],
+        });
+
+        // Trigger real-time update
+        // await pusher.trigger(`wedding-${commentWithGuest?.post?.wedding_event_id}`, 'comment-created', {
+        //   comment: commentWithGuest?.toJSON(),
+        //   post_id,
+        // });
+
+        return NextResponse.json(commentWithGuest);
+      }
+
+      case 'toggle-like': {
+        const { post_id, guest_id, is_liked } = payload;
+        console.log('====================================');
+        console.log(post_id, guest_id, is_liked);
+        console.log('====================================');
+        const session = await getSession();
+        
+        if (!session) {
+          return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+    
+        if (is_liked) {
+          await Like.destroy({
+            where: {
+              post_id,
+              guest_id,
+            },
+          });
+
+    
+          return NextResponse.json({ liked: false });
+        } else {
+          await Like.create({
+            post_id,
+            guest_id,
+          });
+
+          const post = await Post.findByPk(post_id);
+          if (!post) {
+            return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+          }
+    
+
+          const postOwner = await Guest.findByPk(post.guest_id);
+    
+    if (postOwner?.fcm_token && postOwner.id !== session.id) {
+      console.log('====================================');
+      console.log("await sendPostLikeNotification: ",postOwner.fcm_token,
+        session.name);
+      console.log('====================================');
+      // Send notification to post owner
+      await sendPostLikeNotification(
+        postOwner.fcm_token,
+        session.name
+      );
     }
+          return NextResponse.json({ liked: true });
+        }
+      }
+
+      default:
+        return NextResponse.json({ error: 'Invalid operation type' }, { status: 400 });
     }
-  try {
-    const { content, wedding_event_id, guest_id, video_url, image_url } = await req.json();
-    const post = await Post.create({
-      content,
-      image_url,
-      video_url,
-      guest_id,
-      wedding_event_id,
-    });
-    return NextResponse.json({
-      postId: post.id,
-      guestId: post.guest_id,
-    });
-    } catch (error) {
-    console.error('Failed to create post:', error);
-    return NextResponse.json(
-      { message: 'Failed to create post' },
-      { status: 500 }
-    );  }
-  
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
-
-
-

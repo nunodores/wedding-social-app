@@ -1,28 +1,15 @@
-import { Story, Guest } from './models';
-import { pusher } from './pusher';
+import { Story } from './models';
 import { uploadFile } from './posts';
 
 export type { Story };
 
 export async function getStories(wedding_event_id: string): Promise<Story[]> {
-  const stories = await Story.findAll({
-    where: {
-      wedding_event_id,
-      expiresAt: {
-        [Op.gt]: new Date(),
-      },
-    },
-    include: [{
-      model: Guest,
-      attributes: ['name', 'avatar_url'],
-    }],
-    order: [['createdAt', 'DESC']],
+  const response = await fetch('/api/stories', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'get-stories', wedding_event_id }),
   });
-
-  return stories.map(story => ({
-    ...story.toJSON(),
-    isImage: story.media_url.match(/\.(jpeg|jpg|gif|png)$/i) !== null,
-  }));
+  return response.json();
 }
 
 export async function createStory(
@@ -38,30 +25,45 @@ export async function createStory(
   const isImage = mediaFile.type.startsWith('image/');
   const media_url = await uploadFile(mediaFile, isImage ? 'image' : 'video');
 
-  const story = await Story.create({
-    media_url,
-    guest_id,
-    wedding_event_id,
-    expiresAt,
+  const response = await fetch('/api/stories', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'create-story',
+      media_url,
+      guest_id,
+      wedding_event_id,
+      expiresAt: expiresAt.toISOString(),
+    }),
   });
 
-  const storyWithGuest = await Story.findByPk(story.id, {
-    include: [{
-      model: Guest,
-      attributes: ['name', 'avatar_url'],
-    }],
-  });
-
-  const storyData = {
-    ...storyWithGuest?.toJSON(),
-    isImage,
-  };
-
+  if (!response.ok) {
+    throw new Error('Failed to create story');
+  }
   // Trigger real-time update
-  await pusher.trigger(`wedding-${wedding_event_id}`, 'story-created', {
-    story: storyData,
-  });
-
-  return storyData;
+  // await pusher.trigger(`wedding-${wedding_event_id}`, 'story-created', {
+  //   story: await response.json(),
+  // });
+  return response.json();
 }
 
+export async function deleteStory(
+  story_id: string,
+  guest_id: string,
+  wedding_event_id: string
+): Promise<void> {
+  const response = await fetch('/api/stories', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'delete-story',
+      story_id,
+      guest_id,
+      wedding_event_id,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to delete story');
+  }
+}

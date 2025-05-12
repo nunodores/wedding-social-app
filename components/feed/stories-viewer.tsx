@@ -131,7 +131,7 @@ export function StoriesViewer({ storyGroups, initialIndex, onClose }: StoriesVie
           <div>
             <div className="font-medium text-white">{currentGroup.guestName}</div>
             <div className="text-xs text-white/80">
-              {formatDistanceToNow(new Date(currentStory.created_at), { addSuffix: true })}
+              {formatDistanceToNow(new Date(currentStory.createdAt), { addSuffix: true })}
             </div>
           </div>
         </div>

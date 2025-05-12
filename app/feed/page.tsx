@@ -44,6 +44,7 @@ export default function FeedPage() {
         
         // Load posts
         const fetchedPosts = await getPosts(currentGuest.wedding_event_id, currentGuest.id);
+
         setPosts(fetchedPosts);
         
         // Load stories

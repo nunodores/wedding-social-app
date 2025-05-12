@@ -9,60 +9,26 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCurrentGuest } from '@/lib/auth';
+import { TestNotificationButton } from './test-button';
 
-// Mock data for notifications
-const generateMockNotifications = (guestId: string) => {
-  const now = new Date();
-  const oneHourAgo = new Date(now);
-  oneHourAgo.setHours(now.getHours() - 1);
-  
-  const threeDaysAgo = new Date(now);
-  threeDaysAgo.setDate(now.getDate() - 3);
-  
-  return [
-    {
-      id: '1',
-      type: 'like',
-      user: {
-        id: '123',
-        name: 'Sarah Johnson',
-        avatar: null,
-      },
-      postId: '456',
-      isRead: false,
-      createdAt: oneHourAgo.toISOString(),
-    },
-    {
-      id: '2',
-      type: 'comment',
-      user: {
-        id: '789',
-        name: 'Michael Smith',
-        avatar: null,
-      },
-      postId: '456',
-      comment: 'Beautiful photo! Love this moment.',
-      isRead: true,
-      createdAt: threeDaysAgo.toISOString(),
-    },
-    {
-      id: '3',
-      type: 'follow',
-      user: {
-        id: '101',
-        name: 'Emma Taylor',
-        avatar: null,
-      },
-      isRead: false,
-      createdAt: threeDaysAgo.toISOString(),
-    },
-  ];
-};
+interface Notification {
+  id: string;
+  type: 'like' | 'comment' | 'follow';
+  user: {
+    id: string;
+    name: string;
+    avatar_url?: string;
+  };
+  postId?: string;
+  comment?: string;
+  isRead: boolean;
+  createdAt: string;
+}
 
 export default function NotificationsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [guest, setGuest] = useState<any>(null);
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
 
   useEffect(() => {
@@ -76,11 +42,6 @@ export default function NotificationsPage() {
           throw new Error('Not authenticated');
         }
         setGuest(currentGuest);
-        
-        // In a real implementation, we would fetch notifications from an API
-        // For this demo, we'll use mock data
-        const mockNotifications = generateMockNotifications(currentGuest.id);
-        setNotifications(mockNotifications);
       } catch (error) {
         console.error('Error loading notifications:', error);
       } finally {
@@ -108,7 +69,7 @@ export default function NotificationsPage() {
     }
   };
 
-  const getNotificationMessage = (notification: any) => {
+  const getNotificationMessage = (notification: Notification) => {
     switch (notification.type) {
       case 'like':
         return <><span className="font-semibold">{notification.user.name}</span> liked your post</>;
@@ -129,7 +90,10 @@ export default function NotificationsPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Notifications</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Notifications</h1>
+          <TestNotificationButton />
+        </div>
         
         <Tabs defaultValue="all" value={activeTab} onValueChange={(value) => setActiveTab(value as 'all' | 'unread')}>
           <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -175,15 +139,6 @@ export default function NotificationsPage() {
                           {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                         </div>
                       </div>
-                      {notification.type === 'follow' && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="mt-2"
-                        >
-                          Follow Back
-                        </Button>
-                      )}
                     </div>
                   </div>
                 ))}
@@ -229,15 +184,6 @@ export default function NotificationsPage() {
                           {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                         </div>
                       </div>
-                      {notification.type === 'follow' && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="mt-2"
-                        >
-                          Follow Back
-                        </Button>
-                      )}
                     </div>
                   </div>
                 ))}
@@ -246,6 +192,9 @@ export default function NotificationsPage() {
                   <Button 
                     variant="outline" 
                     className="w-full mt-4"
+                    onClick={() => {
+                      setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+                    }}
                   >
                     Mark All as Read
                   </Button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { Heart, MessageCircle, Share2 } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { Post, Comment } from '@/lib/posts';
-import { toggleLike, addComment, getComments } from '@/lib/posts';
+import { toggleLike, addComment } from '@/lib/posts';
 import { CommentsDrawer } from './comments-drawer';
 
 interface PostCardProps {
@@ -19,13 +19,13 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) {
-  const [isLiked, setIsLiked] = useState(post.is_liked || false);
-  const [likesCount, setLikesCount] = useState(post.likes_count || 0);
-  const [commentsCount, setCommentsCount] = useState(post.comments_count || 0);
+  const [isLiked, setIsLiked] = useState(post.Likes?.some(like => like.guest_id === currentGuestId) || false);
+  const [likesCount, setLikesCount] = useState(post.Likes?.length || 0);
+  const [commentsCount, setCommentsCount] = useState(post.Comments?.length || 0);
   const [comment, setComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<Comment[]>(post.Comments || []);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
 
   const handleLikeToggle = async () => {
@@ -37,8 +37,9 @@ export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) 
       // Update the post in parent component
       onUpdatePost({
         ...post,
-        is_liked: newIsLiked,
-        likes_count: newIsLiked ? (post.likes_count || 0) + 1 : (post.likes_count || 0) - 1
+        Likes: newIsLiked 
+          ? [...(post.Likes || []), { guest_id: currentGuestId }]
+          : (post.Likes || []).filter(like => like.guest_id !== currentGuestId),
       });
     } catch (error) {
       console.error('Failed to toggle like:', error);
@@ -59,7 +60,7 @@ export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) 
       // Update the post in parent component
       onUpdatePost({
         ...post,
-        comments_count: (post.comments_count || 0) + 1
+        Comments: [...(post.Comments || []), newComment],
       });
     } catch (error) {
       console.error('Failed to add comment:', error);
@@ -88,13 +89,13 @@ export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) 
       <Card className="w-full overflow-hidden transition-all duration-200 hover:shadow-md">
         <CardHeader className="p-4 flex flex-row items-center space-x-4 space-y-0">
           <Avatar>
-            <AvatarImage src={post.guest?.avatar_url} alt={post.guest?.name || 'Guest'} />
+            <AvatarImage src={post.Guest?.avatar_url} alt={post.Guest?.name || 'Guest'} />
             <AvatarFallback>
-              {post.guest?.name?.substring(0, 2).toUpperCase() || 'GU'}
+              {post.Guest?.name?.substring(0, 2).toUpperCase() || 'GU'}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <div className="font-semibold">{post.guest?.name || 'Guest'}</div>
+            <div className="font-semibold">{post.Guest?.name || 'Guest'}</div>
             <div className="text-sm text-muted-foreground">
               {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
             </div>
@@ -193,7 +194,7 @@ export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) 
         onOpenChange={setIsCommentsOpen}
         isLoading={isLoadingComments}
         onAddComment={async (content) => {
-          if (!content.trim()) return;
+          if (!content.trim()) return false;
           
           try {
             const newComment = await addComment(post.id, currentGuestId, content);
@@ -203,7 +204,7 @@ export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) 
             // Update the post in parent component
             onUpdatePost({
               ...post,
-              comments_count: (post.comments_count || 0) + 1
+              Comments: [...(post.Comments || []), newComment],
             });
             
             return true;

@@ -35,7 +35,6 @@ export function CommentsDrawer({
 }: CommentsDrawerProps) {
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim() || isSubmitting) return;
@@ -82,18 +81,18 @@ export function CommentsDrawer({
             comments.map((comment) => (
               <div key={comment.id} className="flex space-x-3">
                 <Avatar>
-                  <AvatarImage src={comment.guest?.avatar_url} alt={comment.guest?.name || 'Guest'} />
+                  <AvatarImage src={comment.Guest?.avatar_url} alt={comment.Guest?.name} />
                   <AvatarFallback>
-                    {comment.guest?.name?.substring(0, 2).toUpperCase() || 'GU'}
+                    {comment.Guest?.name?.substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <div className="bg-muted rounded-lg p-3">
-                    <div className="font-semibold mb-1">{comment.guest?.name || 'Guest'}</div>
+                    <div className="font-semibold mb-1">{comment.Guest?.name}</div>
                     <div>{comment.content}</div>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                    {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                   </div>
                 </div>
               </div>

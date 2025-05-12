@@ -9,7 +9,8 @@ import {
   Heart, 
   User,
   LogOut,
-  Settings
+  Settings,
+  Bell
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -20,8 +21,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCurrentGuest, signOut } from '@/lib/auth';
+import { requestNotificationPermission, onForegroundMessage } from '@/lib/firebase';
 import { toast } from 'sonner';
 
 interface AppLayoutProps {
@@ -33,20 +36,40 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [guestName, setGuestName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [guestId, setGuestId] = useState<string | null>(null);
+  const [weddingEventId, setWeddingEventId] = useState<string | null>(null);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     async function checkAuth() {
       try {
+        setIsLoading(true);
+        
         const guest = await getCurrentGuest();
         
         if (guest) {
           setIsAuthenticated(true);
           setGuestName(guest.name);
           setAvatarUrl(guest.avatar_url || null);
+          setGuestId(guest.id);
+          setWeddingEventId(guest.wedding_event_id);
+
+          // Request notification permission
+          const fcmToken = await requestNotificationPermission();
+          console.log('====================================');
+          console.log('FCM Token:', fcmToken);
+          console.log('====================================');
+          if (fcmToken) {
+            // Update guest's FCM token in the database
+            await fetch('/api/guests/update-token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ fcmToken }),
+            });
+          }
         } else {
-          // Not authenticated, redirect to login
           router.push('/login');
           return;
         }
@@ -61,6 +84,26 @@ export function AppLayout({ children }: AppLayoutProps) {
     
     checkAuth();
   }, [router]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Listen for foreground messages
+    const unsubscribe = onForegroundMessage((payload) => {
+      setUnreadNotifications(prev => prev + 1);
+      toast(payload.notification?.title, {
+        description: payload.notification?.body,
+        action: {
+          label: 'View',
+          onClick: () => router.push('/notifications')
+        }
+      });
+    });
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, [isAuthenticated, router]);
 
   const handleSignOut = async () => {
     try {
@@ -110,38 +153,60 @@ export function AppLayout({ children }: AppLayoutProps) {
       {/* Header */}
       <header className="border-b py-3 px-4 sticky top-0 bg-background z-30">
         <div className="container max-w-lg mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-bold">WeddingSnap</h1>
+          <h1 className="text-xl font-bold">WeddingPost</h1>
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <Avatar>
-                  <AvatarImage src={avatarUrl || undefined} alt={guestName || 'Guest'} />
-                  <AvatarFallback>
-                    {guestName ? guestName.substring(0, 2).toUpperCase() : 'GU'}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem className="flex items-center gap-2">
-                <User size={16} />
-                <span>Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex items-center gap-2">
-                <Settings size={16} />
-                <span>Settings</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="flex items-center gap-2 text-destructive focus:text-destructive"
-                onClick={handleSignOut}
-              >
-                <LogOut size={16} />
-                <span>Sign out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={pathname === '/notifications' ? 'text-primary relative' : 'text-muted-foreground relative'}
+              onClick={() => {
+                router.push('/notifications');
+                setUnreadNotifications(0);
+              }}
+            >
+              <Bell size={24} />
+              {unreadNotifications > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                >
+                  {unreadNotifications}
+                </Badge>
+              )}
+            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Avatar>
+                    <AvatarImage src={avatarUrl || undefined} alt={guestName || 'Guest'} />
+                    <AvatarFallback>
+                      {guestName ? guestName.substring(0, 2).toUpperCase() : 'GU'}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem className="flex items-center gap-2">
+                  <User size={16} />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="flex items-center gap-2">
+                  <Settings size={16} />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="flex items-center gap-2 text-destructive focus:text-destructive"
+                  onClick={handleSignOut}
+                >
+                  <LogOut size={16} />
+                  <span>Sign out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
       

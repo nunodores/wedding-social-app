@@ -45,6 +45,7 @@ export class Guest extends Model {
   public email!: string;
   public hashedPassword!: string;
   public avatar_url?: string;
+  public fcm_token?: string;
   public wedding_event_id!: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -71,6 +72,10 @@ Guest.init(
       allowNull: false,
     },
     avatar_url: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    fcm_token: {
       type: DataTypes.STRING,
       allowNull: true,
     },
@@ -199,7 +204,6 @@ export class Comment extends Model {
   public post_id!: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
-
 }
 
 Comment.init(
@@ -233,7 +237,6 @@ Comment.init(
   {
     sequelize,
     tableName: 'comments',
-    timestamps: true,
   }
 );
 
@@ -273,7 +276,6 @@ Like.init(
   {
     sequelize,
     tableName: 'likes',
-    timestamps: true,
     indexes: [
       {
         unique: true,
