@@ -94,6 +94,7 @@ export async function toggleLike(post_id: string, guest_id: string, is_liked: bo
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       type: 'toggle-like',
+      notificationType: 'like',
       post_id,
       guest_id,
       is_liked,

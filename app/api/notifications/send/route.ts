@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { Guest } from '@/lib/models';
+import { Guest , Notification} from '@/lib/models';
 import { sendNotification } from '@/lib/firebase-admin';
 
 export async function POST(req: Request) {
@@ -14,6 +14,17 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    console.log('====================================');
+    console.log("CREATE NOTIFICATION");
+    console.log('====================================');
+      // Save notification in the DB
+      await Notification.create({
+        to_guest_id: userId,
+        from_guest_id: notification.fromGuestId || null,
+        post_id: notification.postId || null,
+        type: notification.type, // 'like' | 'comment' | ...
+        read_post: false,
+      });
 
     // Send notification using Firebase Admin SDK
     const result = await sendNotification(guest.fcm_token, {

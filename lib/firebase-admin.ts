@@ -59,3 +59,24 @@ export async function sendPostLikeNotification(
     return false;
   }
 }
+
+export async function sendPostCommentNotification(
+  receiverFcmToken: string,
+  likerName: string,
+) {
+  try {
+    console.log('====================================');
+    console.log(receiverFcmToken);
+    console.log('====================================');
+    return await sendNotification(receiverFcmToken, {
+      title: 'New Comment',
+      body: `${likerName} commented your post`,
+      data: {
+        type: 'POST_COMMENT',
+      }
+    });
+  } catch (error) {
+    console.error('Error sending comment notification:', error);
+    return false;
+  }
+}

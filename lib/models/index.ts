@@ -285,6 +285,66 @@ Like.init(
   }
 );
 
+export class Notification extends Model {
+  public id!: string;
+  public to_guest_id!: string;
+  public from_guest_id!: string | null;
+  public post_id!: string | null;
+  public type!: 'like' | 'comment' | 'follow' | 'mention';
+  public read_post!: boolean;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+Notification.init(
+  {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    to_guest_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: Guest,
+        key: 'id',
+      },
+    },
+    from_guest_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: Guest,
+        key: 'id',
+      },
+    },
+    post_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: Post,
+        key: 'id',
+      },
+    },
+    type: {
+      type: DataTypes.ENUM('like', 'comment', 'follow', 'mention'),
+      allowNull: false,
+    },
+    read_post: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+  },
+  {
+    sequelize,
+    tableName: 'notifications',
+    underscored: true,
+    timestamps: true,
+  }
+);
+
 // Define Associations
 WeddingEvent.hasMany(Guest, { foreignKey: 'wedding_event_id' });
 Guest.belongsTo(WeddingEvent, { foreignKey: 'wedding_event_id' });
@@ -312,5 +372,13 @@ Comment.belongsTo(Post, { foreignKey: 'post_id' });
 
 Post.hasMany(Like, { foreignKey: 'post_id' });
 Like.belongsTo(Post, { foreignKey: 'post_id' });
+
+Guest.hasMany(Notification, { foreignKey: 'to_guest_id', as: 'receivedNotifications' });
+Guest.hasMany(Notification, { foreignKey: 'from_guest_id', as: 'sentNotifications' });
+Notification.belongsTo(Guest, { foreignKey: 'to_guest_id', as: 'toGuest' });
+Notification.belongsTo(Guest, { foreignKey: 'from_guest_id', as: 'fromGuest' });
+
+Post.hasMany(Notification, { foreignKey: 'post_id' });
+Notification.belongsTo(Post, { foreignKey: 'post_id' });
 
 export { sequelize };

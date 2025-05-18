@@ -26,6 +26,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getCurrentGuest, signOut } from '@/lib/auth';
 import { requestNotificationPermission, onForegroundMessage } from '@/lib/firebase';
 import { toast } from 'sonner';
+import { NotificationBadge } from '@/components/notification-badge';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -87,18 +88,25 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-
-    // Listen for foreground messages
-    const unsubscribe = onForegroundMessage((payload) => {
-      setUnreadNotifications(prev => prev + 1);
-      toast(payload.notification?.title, {
-        description: payload.notification?.body,
-        action: {
-          label: 'View',
-          onClick: () => router.push('/notifications')
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch('/api/notifications/unread-count');
+        if (response.ok) {
+          const data = await response.json();
+          setUnreadNotifications(data.count);
+        
         }
-      });
+      } catch (error) {
+        console.error('Error fetching unread notifications:', error);
+      }
+    };
+    // Listen for foreground messages
+    const unsubscribe = onForegroundMessage(() => {
+  
+      fetchUnreadCount();
+      
     });
+    fetchUnreadCount();
 
     return () => {
       unsubscribe?.();
@@ -162,7 +170,6 @@ export function AppLayout({ children }: AppLayoutProps) {
               className={pathname === '/notifications' ? 'text-primary relative' : 'text-muted-foreground relative'}
               onClick={() => {
                 router.push('/notifications');
-                setUnreadNotifications(0);
               }}
             >
               <Bell size={24} />
@@ -263,3 +270,5 @@ export function AppLayout({ children }: AppLayoutProps) {
     </div>
   );
 }
+
+

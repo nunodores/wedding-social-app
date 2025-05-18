@@ -5,34 +5,31 @@ import { formatDistanceToNow } from 'date-fns';
 import { Heart, MessageCircle, UserPlus, Bell } from 'lucide-react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCurrentGuest } from '@/lib/auth';
-import { TestNotificationButton } from './test-button';
 
 interface Notification {
   id: string;
   type: 'like' | 'comment' | 'follow';
-  user: {
-    id: string;
+  from_guest_id: string | null;
+  to_guest_id: string;
+  post_id: string | null;
+  read_post: boolean;
+  createdAt: string;
+  fromGuest?: {
     name: string;
     avatar_url?: string;
   };
-  postId?: string;
-  comment?: string;
-  isRead: boolean;
-  createdAt: string;
 }
 
 export default function NotificationsPage() {
   const [isLoading, setIsLoading] = useState(true);
-  const [guest, setGuest] = useState<any>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'unread'>('unread');
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadNotifications = async () => {
       try {
         setIsLoading(true);
         
@@ -41,7 +38,15 @@ export default function NotificationsPage() {
         if (!currentGuest) {
           throw new Error('Not authenticated');
         }
-        setGuest(currentGuest);
+
+        // Fetch notifications
+        const response = await fetch('/api/notifications');
+        if (!response.ok) {
+          throw new Error('Failed to fetch notifications');
+        }
+
+        const data = await response.json();
+        setNotifications(data.notifications);
       } catch (error) {
         console.error('Error loading notifications:', error);
       } finally {
@@ -49,12 +54,12 @@ export default function NotificationsPage() {
       }
     };
     
-    loadData();
+    loadNotifications();
   }, []);
 
   const filteredNotifications = activeTab === 'all' 
     ? notifications 
-    : notifications.filter(n => !n.isRead);
+    : notifications.filter(n => !n.read_post);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -70,30 +75,43 @@ export default function NotificationsPage() {
   };
 
   const getNotificationMessage = (notification: Notification) => {
+    const userName = notification.fromGuest?.name || 'Someone';
+    
     switch (notification.type) {
       case 'like':
-        return <><span className="font-semibold">{notification.user.name}</span> liked your post</>;
+        return <><span className="font-semibold">{userName}</span> liked your post</>;
       case 'comment':
         return (
           <div>
-            <div><span className="font-semibold">{notification.user.name}</span> commented on your post</div>
-            <div className="text-sm text-muted-foreground mt-1">"{notification.comment}"</div>
+            <div><span className="font-semibold">{userName}</span> commented on your post</div>
           </div>
         );
       case 'follow':
-        return <><span className="font-semibold">{notification.user.name}</span> followed you</>;
+        return <><span className="font-semibold">{userName}</span> followed you</>;
       default:
         return 'New notification';
     }
   };
 
+  const markAllAsRead = async () => {
+    try {
+      const response = await fetch('/api/notifications/mark-all-read', {
+        method: 'POST',
+      });
+  
+      if (response.ok) {
+        // Update local state
+        setNotifications(notifications.map(n => ({ ...n, read_post: true })));
+      }
+    } catch (error) {
+      console.error('Error marking notifications as read:', error);
+    }
+  };
+  
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Notifications</h1>
-          <TestNotificationButton />
-        </div>
+    
         
         <Tabs defaultValue="all" value={activeTab} onValueChange={(value) => setActiveTab(value as 'all' | 'unread')}>
           <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -119,7 +137,7 @@ export default function NotificationsPage() {
                 <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="font-semibold text-lg mb-2">No notifications</h3>
                 <p className="text-muted-foreground">
-                  You're all caught up!
+                  You&apos;re all caught up!
                 </p>
               </div>
             ) : (
@@ -127,7 +145,7 @@ export default function NotificationsPage() {
                 {filteredNotifications.map(notification => (
                   <div 
                     key={notification.id} 
-                    className={`flex items-start space-x-4 p-3 rounded-lg ${!notification.isRead ? 'bg-muted' : ''}`}
+                    className={`flex items-start space-x-4 p-3 rounded-lg ${!notification.read_post ? 'bg-muted' : ''}`}
                   >
                     <div className="mt-1">
                       {getNotificationIcon(notification.type)}
@@ -164,7 +182,7 @@ export default function NotificationsPage() {
                 <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="font-semibold text-lg mb-2">No unread notifications</h3>
                 <p className="text-muted-foreground">
-                  You're all caught up!
+                  You&apos;re all caught up!
                 </p>
               </div>
             ) : (
@@ -192,9 +210,7 @@ export default function NotificationsPage() {
                   <Button 
                     variant="outline" 
                     className="w-full mt-4"
-                    onClick={() => {
-                      setNotifications(notifications.map(n => ({ ...n, isRead: true })));
-                    }}
+                    onClick={markAllAsRead}
                   >
                     Mark All as Read
                   </Button>
