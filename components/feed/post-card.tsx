@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import type { Post, Comment } from '@/lib/posts';
 import { toggleLike, addComment } from '@/lib/posts';
 import { CommentsDrawer } from './comments-drawer';
+import { useRouter } from 'next/navigation';
 
 interface PostCardProps {
   post: Post;
@@ -27,6 +28,7 @@ export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) 
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>(post.Comments || []);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const router = useRouter();
 
   const handleLikeToggle = async () => {
     try {
@@ -84,18 +86,34 @@ export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) 
     setIsCommentsOpen(true);
   };
 
+  const handleProfileClick = () => {
+    if(post.guest_id  === currentGuestId)  {
+      router.push(`/profile`);
+      return;
+    }
+    router.push(`/users/${post.guest_id}`);
+  };
+
   return (
     <>
       <Card className="w-full overflow-hidden transition-all duration-200 hover:shadow-md">
         <CardHeader className="p-4 flex flex-row items-center space-x-4 space-y-0">
-          <Avatar>
+          <Avatar 
+            className="cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={handleProfileClick}
+          >
             <AvatarImage src={post.Guest?.avatar_url} alt={post.Guest?.name || 'Guest'} />
             <AvatarFallback>
               {post.Guest?.name?.substring(0, 2).toUpperCase() || 'GU'}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <div className="font-semibold">{post.Guest?.name || 'Guest'}</div>
+            <div 
+              className="font-semibold cursor-pointer hover:underline"
+              onClick={handleProfileClick}
+            >
+              {post.Guest?.name || 'Guest'}
+            </div>
             <div className="text-sm text-muted-foreground">
               {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
             </div>

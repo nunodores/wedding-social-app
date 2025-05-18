@@ -33,17 +33,14 @@ export async function createStory(
       media_url,
       guest_id,
       wedding_event_id,
-      expiresAt: expiresAt.toISOString(),
+      expires_at: expiresAt.toISOString(),
     }),
   });
 
   if (!response.ok) {
     throw new Error('Failed to create story');
   }
-  // Trigger real-time update
-  // await pusher.trigger(`wedding-${wedding_event_id}`, 'story-created', {
-  //   story: await response.json(),
-  // });
+
   return response.json();
 }
 

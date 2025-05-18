@@ -7,8 +7,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { createPost } from '@/lib/posts';
-import { Guest, WeddingEvent } from '@/lib/auth';
+import { Guest } from '@/lib/auth';
 import { toast } from 'sonner';
+import { WeddingEvent } from '@/lib/models';
 
 interface CreatePostFormProps {
   guest: Guest;

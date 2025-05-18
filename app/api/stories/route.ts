@@ -14,7 +14,7 @@ export async function POST(req: Request) {
           media_url,
           guest_id,
           wedding_event_id,
-          expires_at,
+          expiresAt: expires_at,
         });
 
         const storyWithGuest = await Story.findByPk(story.id, {
@@ -23,11 +23,6 @@ export async function POST(req: Request) {
             attributes: ['name', 'avatar_url'],
           }],
         });
-
-        // Trigger real-time update
-        // await pusher.trigger(`wedding-${wedding_event_id}`, 'story-created', {
-        //   story: storyWithGuest?.toJSON(),
-        // });
 
         return NextResponse.json(storyWithGuest);
       }
@@ -43,7 +38,7 @@ export async function POST(req: Request) {
           },
           include: [{
             model: Guest,
-            attributes: ['name', 'avatar_url'],
+            attributes: ['id', 'name', 'avatar_url'],
           }],
           order: [['createdAt', 'DESC']],
         });
@@ -69,13 +64,6 @@ export async function POST(req: Request) {
         }
 
         await story.destroy();
-
-        // Trigger real-time update
-        // await pusher.trigger(`wedding-${wedding_event_id}`, 'story-deleted', {
-        //   story_id,
-        //   guest_id,
-        // });
-
         return NextResponse.json({ success: true });
       }
 

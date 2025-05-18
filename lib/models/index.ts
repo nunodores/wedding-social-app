@@ -156,6 +156,7 @@ export class Story extends Model {
   public guest_id!: string;
   public wedding_event_id!: string;
   public readonly createdAt!: Date;
+  Guest: any;
 }
 
 Story.init(
@@ -345,6 +346,63 @@ Notification.init(
   }
 );
 
+// Follow Model
+export class Follow extends Model {
+  public id!: string;
+  public follower_id!: string;
+  public following_id!: string;
+  public readonly createdAt!: Date;
+}
+
+Follow.init(
+  {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    follower_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: Guest,
+        key: 'id',
+      },
+    },
+    following_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: Guest,
+        key: 'id',
+      },
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+  },
+  {
+    sequelize,
+    tableName: 'follows',
+    indexes: [
+      {
+        unique: true,
+        fields: ['follower_id', 'following_id'],
+      },
+      {
+        fields: ['follower_id'],
+      },
+      {
+        fields: ['following_id'],
+      },
+    ],
+    updatedAt: false,
+  }
+);
+
+
 // Define Associations
 WeddingEvent.hasMany(Guest, { foreignKey: 'wedding_event_id' });
 Guest.belongsTo(WeddingEvent, { foreignKey: 'wedding_event_id' });
@@ -380,5 +438,18 @@ Notification.belongsTo(Guest, { foreignKey: 'from_guest_id', as: 'fromGuest' });
 
 Post.hasMany(Notification, { foreignKey: 'post_id' });
 Notification.belongsTo(Post, { foreignKey: 'post_id' });
+Guest.belongsToMany(Guest, {
+  through: Follow,
+  as: 'Followings', // Guests this guest is following
+  foreignKey: 'follower_id',
+  otherKey: 'following_id',
+});
+
+Guest.belongsToMany(Guest, {
+  through: Follow,
+  as: 'Followers', // Guests following this guest
+  foreignKey: 'following_id',
+  otherKey: 'follower_id',
+});
 
 export { sequelize };

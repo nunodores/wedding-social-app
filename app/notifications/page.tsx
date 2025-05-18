@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCurrentGuest } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
 
 interface Notification {
   id: string;
@@ -27,6 +28,7 @@ export default function NotificationsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('unread');
+  const router = useRouter();
 
   useEffect(() => {
     const loadNotifications = async () => {
@@ -107,12 +109,16 @@ export default function NotificationsPage() {
       console.error('Error marking notifications as read:', error);
     }
   };
+
+  const handleNotificationClick = (notification: Notification) => {
+    if (notification.post_id) {
+      router.push(`/posts/${notification.post_id}`);
+    }
+  };
   
   return (
     <AppLayout>
       <div className="space-y-6">
-    
-        
         <Tabs defaultValue="all" value={activeTab} onValueChange={(value) => setActiveTab(value as 'all' | 'unread')}>
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="all">All</TabsTrigger>
@@ -145,7 +151,8 @@ export default function NotificationsPage() {
                 {filteredNotifications.map(notification => (
                   <div 
                     key={notification.id} 
-                    className={`flex items-start space-x-4 p-3 rounded-lg ${!notification.read_post ? 'bg-muted' : ''}`}
+                    className={`flex items-start space-x-4 p-3 rounded-lg ${!notification.read_post ? 'bg-muted' : ''} cursor-pointer hover:bg-muted/80 transition-colors`}
+                    onClick={() => handleNotificationClick(notification)}
                   >
                     <div className="mt-1">
                       {getNotificationIcon(notification.type)}
@@ -190,7 +197,8 @@ export default function NotificationsPage() {
                 {filteredNotifications.map(notification => (
                   <div 
                     key={notification.id} 
-                    className="flex items-start space-x-4 p-3 rounded-lg bg-muted"
+                    className="flex items-start space-x-4 p-3 rounded-lg bg-muted cursor-pointer hover:bg-muted/80 transition-colors"
+                    onClick={() => handleNotificationClick(notification)}
                   >
                     <div className="mt-1">
                       {getNotificationIcon(notification.type)}

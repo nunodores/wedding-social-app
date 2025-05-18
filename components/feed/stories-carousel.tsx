@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Story, createStory } from '@/lib/stories';
-import { Guest, WeddingEvent } from '@/lib/auth';
+import { Guest } from '@/lib/auth';
 import { StoriesViewer } from './stories-viewer';
 import { toast } from 'sonner';
+import { WeddingEvent } from '@/lib/models';
+import { DialogTitle } from '@radix-ui/react-dialog';
 
 interface StoriesCarouselProps {
   stories: Story[];
@@ -41,8 +43,8 @@ export function StoriesCarousel({
 
   const guestStoriesList = Object.entries(guestStories).map(([guestId, stories]) => ({
     guestId,
-    guestName: stories[0].guest?.name || 'Guest',
-    guestAvatar: stories[0].guest?.avatar_url,
+    guestName: stories[0].Guest?.name || 'Guest',
+    guestAvatar: stories[0].Guest?.avatar_url,
     stories,
   }));
 
@@ -55,7 +57,7 @@ export function StoriesCarousel({
 
   const handleStoryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !weddingEvent.id || !currentGuest.id) return;
 
     setIsUploading(true);
     try {
@@ -102,7 +104,7 @@ export function StoriesCarousel({
         </div>
       </div>
 
-      <ScrollArea className="w-full" orientation="horizontal">
+      <ScrollArea className="w-full whitespace-nowrap">
         <div 
           ref={scrollRef}
           className="flex space-x-4 pb-2 pt-1 px-1"

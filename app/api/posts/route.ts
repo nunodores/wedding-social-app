@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Guest, Like, Post, Comment, Notification } from '@/lib/models';
+import { Op } from 'sequelize';
 import { sendNotification, sendPostCommentNotification, sendPostLikeNotification } from '@/lib/firebase-admin';
 import { getSession } from '@/lib/auth-server';
 
@@ -25,11 +26,6 @@ export async function POST(req: Request) {
             attributes: ['id', 'name', 'avatar_url'],
           }],
         });
-
-        // Trigger real-time update
-        // await pusher.trigger(`wedding-${wedding_event_id}`, 'post-created', {
-        //   post: postWithGuest?.toJSON(),
-        // });
 
         return NextResponse.json(postWithGuest);
       }
@@ -64,6 +60,42 @@ export async function POST(req: Request) {
         return NextResponse.json(posts);
       }
 
+      case 'get-post': {
+        const { post_id, wedding_event_id } = payload;
+        const post = await Post.findOne({
+          where: { 
+            id: post_id,
+            wedding_event_id 
+          },
+          include: [
+            {
+              model: Guest,
+              attributes: ['id', 'name', 'avatar_url'],
+            },
+            {
+              model: Comment,
+              include: [{
+                model: Guest,
+                attributes: ['id', 'name', 'avatar_url'],
+              }]
+            },
+            {
+              model: Like,
+              include: [{
+                model: Guest,
+                attributes: ['id', 'name', 'avatar_url'],
+              }]
+            },
+          ],
+        });
+
+        if (!post) {
+          return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+        }
+
+        return NextResponse.json(post);
+      }
+
       case 'add-comment': {
         const { post_id, guest_id, content } = payload;
         const comment = await Comment.create({
@@ -87,7 +119,6 @@ export async function POST(req: Request) {
             },
           ],
         });
-        console.log(commentWithGuest);
         
         // Get post owner information and send notification
         const post = await Post.findByPk(post_id);
@@ -96,8 +127,6 @@ export async function POST(req: Request) {
         }
         const postOwner = await Guest.findByPk(post.guest_id);
 
-        console.log('====================================');
-        console.log(postOwner)
         const session = await getSession();
         
         if (!session) {
@@ -105,9 +134,7 @@ export async function POST(req: Request) {
         }
     
         if (postOwner?.fcm_token && postOwner.id !== session?.id) {
-          
           // Send push notification
-
           await sendPostCommentNotification(
             postOwner.fcm_token,
             session.name
@@ -128,9 +155,6 @@ export async function POST(req: Request) {
 
       case 'toggle-like': {
         const { post_id, guest_id, is_liked, notificationType } = payload;
-        console.log('====================================');
-        console.log(post_id, guest_id, is_liked);
-        console.log('====================================');
         const session = await getSession();
         
         if (!session) {
@@ -144,8 +168,6 @@ export async function POST(req: Request) {
               guest_id,
             },
           });
-
-    
           return NextResponse.json({ liked: false });
         } else {
           await Like.create({
@@ -157,32 +179,25 @@ export async function POST(req: Request) {
           if (!post) {
             return NextResponse.json({ error: 'Post not found' }, { status: 404 });
           }
-    
 
           const postOwner = await Guest.findByPk(post.guest_id);
     
-    if (postOwner?.fcm_token && postOwner.id !== session.id) {
-      console.log('====================================');
-      console.log("await sendPostLikeNotification: ",postOwner.fcm_token,
-        session.name);
-      console.log('====================================');
-      // Send notification to post owner
-      await sendPostLikeNotification(
-        postOwner.fcm_token,
-        session.name
-      );
-      console.log('====================================');
-      console.log("CREATE NOTIFICATION");
-      console.log('====================================');
-        // Save notification in the DB
-        await Notification.create({
-          to_guest_id: postOwner.id,
-          from_guest_id: session.id || null,
-          post_id: post_id|| null,
-          type: notificationType, // 'like' | 'comment' | ...
-          read_post: false,
-        });
-    }
+          if (postOwner?.fcm_token && postOwner.id !== session.id) {
+            // Send notification to post owner
+            await sendPostLikeNotification(
+              postOwner.fcm_token,
+              session.name
+            );
+
+            // Save notification in the DB
+            await Notification.create({
+              to_guest_id: postOwner.id,
+              from_guest_id: session.id || null,
+              post_id: post_id || null,
+              type: notificationType,
+              read_post: false,
+            });
+          }
           return NextResponse.json({ liked: true });
         }
       }

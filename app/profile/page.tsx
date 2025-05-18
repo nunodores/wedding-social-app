@@ -10,11 +10,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getCurrentGuest } from '@/lib/auth';
 import { getPosts, Post } from '@/lib/posts';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [guest, setGuest] = useState<any>(null);
   const [posts, setPosts] = useState<Post[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     const loadData = async () => {
@@ -105,7 +107,7 @@ export default function ProfilePage() {
               </div>
             </div>
             
-            <Button className="w-full max-w-xs" variant="outline">
+            <Button className="w-full max-w-xs" variant="outline" onClick={() =>router.push('edit-profile')}>
               <Settings className="h-4 w-4 mr-2" />
               Edit Profile
             </Button>
@@ -136,7 +138,8 @@ export default function ProfilePage() {
               ) : (
                 <div className="grid grid-cols-3 gap-1">
                   {posts.map(post => (
-                    <div key={post.id} className="aspect-square relative">
+                    <div key={post.id}                   className="aspect-square relative cursor-pointer"
+                    onClick={() => router.push(`/posts/${post.id}`)}>
                       {post.image_url ? (
                         <img 
                           src={post.image_url} 
@@ -173,7 +176,7 @@ export default function ProfilePage() {
               <div className="text-center py-8">
                 <h3 className="font-semibold text-lg mb-2">No tagged posts</h3>
                 <p className="text-muted-foreground">
-                  Posts you're tagged in will appear here.
+                  Posts you&apos;re tagged in will appear here.
                 </p>
               </div>
             </TabsContent>
