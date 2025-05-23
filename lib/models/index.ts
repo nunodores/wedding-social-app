@@ -291,7 +291,7 @@ export class Notification extends Model {
   public to_guest_id!: string;
   public from_guest_id!: string | null;
   public post_id!: string | null;
-  public type!: 'like' | 'comment' | 'follow' | 'mention';
+  public type!: 'like' | 'comment' | 'mention';
   public read_post!: boolean;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -329,7 +329,7 @@ Notification.init(
       },
     },
     type: {
-      type: DataTypes.ENUM('like', 'comment', 'follow', 'mention'),
+      type: DataTypes.ENUM('like', 'comment', 'mention'),
       allowNull: false,
     },
     read_post: {
@@ -346,61 +346,6 @@ Notification.init(
   }
 );
 
-// Follow Model
-export class Follow extends Model {
-  public id!: string;
-  public follower_id!: string;
-  public following_id!: string;
-  public readonly createdAt!: Date;
-}
-
-Follow.init(
-  {
-    id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-    },
-    follower_id: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      references: {
-        model: Guest,
-        key: 'id',
-      },
-    },
-    following_id: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      references: {
-        model: Guest,
-        key: 'id',
-      },
-    },
-    createdAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-  },
-  {
-    sequelize,
-    tableName: 'follows',
-    indexes: [
-      {
-        unique: true,
-        fields: ['follower_id', 'following_id'],
-      },
-      {
-        fields: ['follower_id'],
-      },
-      {
-        fields: ['following_id'],
-      },
-    ],
-    updatedAt: false,
-  }
-);
 
 
 // Define Associations
@@ -438,18 +383,5 @@ Notification.belongsTo(Guest, { foreignKey: 'from_guest_id', as: 'fromGuest' });
 
 Post.hasMany(Notification, { foreignKey: 'post_id' });
 Notification.belongsTo(Post, { foreignKey: 'post_id' });
-Guest.belongsToMany(Guest, {
-  through: Follow,
-  as: 'Followings', // Guests this guest is following
-  foreignKey: 'follower_id',
-  otherKey: 'following_id',
-});
-
-Guest.belongsToMany(Guest, {
-  through: Follow,
-  as: 'Followers', // Guests following this guest
-  foreignKey: 'following_id',
-  otherKey: 'follower_id',
-});
 
 export { sequelize };

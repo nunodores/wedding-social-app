@@ -13,8 +13,6 @@ import { toast } from 'sonner';
 
 export default function UserProfilePage({ params }: { params: { userId: string } }) {
   const [isLoading, setIsLoading] = useState(true);
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [isUpdatingFollow, setIsUpdatingFollow] = useState(false);
   const [currentGuest, setCurrentGuest] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -50,7 +48,6 @@ export default function UserProfilePage({ params }: { params: { userId: string }
 
         const userData = await response.json();
         setUser(userData);
-        setIsFollowing(userData.isFollowing);
         
         // Load posts
         const fetchedPosts = await getPosts(guest.wedding_event_id, guest.id);
@@ -67,31 +64,6 @@ export default function UserProfilePage({ params }: { params: { userId: string }
     loadData();
   }, [params.userId, router]);
 
-  const handleFollowToggle = async () => {
-    try {
-      setIsUpdatingFollow(true);
-      const response = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: isFollowing ? 'unfollow' : 'follow',
-          user_id: params.userId,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update follow status');
-      }
-
-      setIsFollowing(!isFollowing);
-      toast.success(isFollowing ? 'Unfollowed successfully' : 'Followed successfully');
-    } catch (error) {
-      console.error('Error updating follow status:', error);
-      toast.error('Failed to update follow status');
-    } finally {
-      setIsUpdatingFollow(false);
-    }
-  };
 
   return (
     <AppLayout>
@@ -148,17 +120,9 @@ export default function UserProfilePage({ params }: { params: { userId: string }
                 <div className="font-semibold">{posts.length}</div>
                 <div className="text-sm text-muted-foreground">Posts</div>
               </div>
-              <div className="text-center">
-                <div className="font-semibold">{user.followersCount}</div>
-                <div className="text-sm text-muted-foreground">Followers</div>
-              </div>
-              <div className="text-center">
-                <div className="font-semibold">{user.followingCount}</div>
-                <div className="text-sm text-muted-foreground">Following</div>
-              </div>
             </div>
 
-            {currentGuest.id === user.id ? (
+            {currentGuest.id === user.id && (
               <Button 
                 variant="outline" 
                 className="w-full max-w-xs"
@@ -167,21 +131,7 @@ export default function UserProfilePage({ params }: { params: { userId: string }
                 <Settings className="h-4 w-4 mr-2" />
                 Edit Profile
               </Button>
-            ) : (
-              <Button
-                variant={isFollowing ? "outline" : "default"}
-                className="w-full max-w-xs"
-                onClick={handleFollowToggle}
-                disabled={isUpdatingFollow}
-              >
-                {isFollowing ? (
-                  <UserMinus className="h-4 w-4 mr-2" />
-                ) : (
-                  <UserPlus className="h-4 w-4 mr-2" />
-                )}
-                {isFollowing ? 'Unfollow' : 'Follow'}
-              </Button>
-            )}
+            ) }
           </div>
           
           <div className="grid grid-cols-3 gap-1">

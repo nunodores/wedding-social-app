@@ -111,14 +111,13 @@ export default function FeedPage() {
         </>
       ) : (
         <>
-          {stories.length > 0 && (
+       
             <StoriesCarousel 
               stories={stories} 
               currentGuest={guest}
               weddingEvent={weddingEvent}
               onStoryCreated={handleStoryCreated}
             />
-          )}
           
           <CreatePostForm 
             guest={guest}

@@ -11,6 +11,7 @@ import { getCurrentGuest } from '@/lib/auth';
 import { getPosts, Post } from '@/lib/posts';
 import { toast } from 'sonner';
 import { AvatarGroup } from '@/components/ui/avatar-group';
+import { useRouter } from 'next/navigation';
 
 export default function SearchPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -19,6 +20,7 @@ export default function SearchPage() {
   const [weddingEventId, setWeddingEventId] = useState<string | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [guests, setGuests] = useState<any[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     const loadData = async () => {
@@ -40,11 +42,11 @@ export default function SearchPage() {
         // Extract unique guests from posts
         const uniqueGuests = new Map();
         fetchedPosts.forEach(post => {
-          if (post.guest && !uniqueGuests.has(post.guest_id)) {
+          if (post.Guest && !uniqueGuests.has(post.guest_id)) {
             uniqueGuests.set(post.guest_id, {
               id: post.guest_id,
-              name: post.guest.name,
-              avatarUrl: post.guest.avatar_url,
+              name: post.Guest.name,
+              avatarUrl: post.Guest.avatar_url,
             });
           }
         });
@@ -64,7 +66,7 @@ export default function SearchPage() {
   const filteredPosts = searchQuery 
     ? posts.filter(post => 
         post.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.guest?.name.toLowerCase().includes(searchQuery.toLowerCase())
+        post.Guest?.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : posts;
     
@@ -116,7 +118,8 @@ export default function SearchPage() {
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
                   {filteredPosts.map(post => (
-                    <div key={post.id} className="aspect-square relative">
+                    <div key={post.id} className="aspect-square relative cursor-pointer" 
+                    onClick={() => router.push(`/posts/${post.id}`)}>
                       {post.image_url ? (
                         <div className="group relative w-full h-full overflow-hidden">
                           <img 
@@ -127,7 +130,7 @@ export default function SearchPage() {
                           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <div className="text-white text-sm font-medium">
                               <AvatarGroup 
-                                users={[{ name: post.guest?.name || 'Guest', avatarUrl: post.guest?.avatar_url }]}
+                                users={[{ name: post.Guest?.name || 'Guest', avatarUrl: post.Guest?.avatar_url }]}
                                 size="sm"
                               />
                             </div>
@@ -167,7 +170,14 @@ export default function SearchPage() {
               ) : (
                 <div className="space-y-4">
                   {filteredGuests.map(g => (
-                    <div key={g.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted transition-colors">
+                    <div key={g.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer"
+                    onClick={()=> {
+                      if(g.id  === guest.id)  {
+                        router.push(`/profile`);
+                        return;
+                      }
+                      router.push(`/users/${g.id}`);
+                    }}>
                       <Avatar>
                         <AvatarImage src={g.avatarUrl} alt={g.name} />
                         <AvatarFallback>{g.name.substring(0, 2).toUpperCase()}</AvatarFallback>

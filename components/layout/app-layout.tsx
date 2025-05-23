@@ -59,9 +59,6 @@ export function AppLayout({ children }: AppLayoutProps) {
 
           // Request notification permission
           const fcmToken = await requestNotificationPermission();
-          console.log('====================================');
-          console.log('FCM Token:', fcmToken);
-          console.log('====================================');
           if (fcmToken) {
             // Update guest's FCM token in the database
             await fetch('/api/guests/update-token', {

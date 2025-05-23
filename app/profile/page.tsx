@@ -97,14 +97,6 @@ export default function ProfilePage() {
                 <div className="font-semibold">{posts.length}</div>
                 <div className="text-sm text-muted-foreground">Posts</div>
               </div>
-              <div className="text-center">
-                <div className="font-semibold">0</div>
-                <div className="text-sm text-muted-foreground">Followers</div>
-              </div>
-              <div className="text-center">
-                <div className="font-semibold">0</div>
-                <div className="text-sm text-muted-foreground">Following</div>
-              </div>
             </div>
             
             <Button className="w-full max-w-xs" variant="outline" onClick={() =>router.push('edit-profile')}>

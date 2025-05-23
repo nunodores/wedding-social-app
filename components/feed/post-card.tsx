@@ -175,14 +175,7 @@ export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) 
               <MessageCircle size={18} />
               Comment
             </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="flex-1 flex items-center gap-1"
-            >
-              <Share2 size={18} />
-              Share
-            </Button>
+           
           </div>
           <form onSubmit={handleSubmitComment} className="flex items-center space-x-2 w-full mt-2">
             <Avatar className="h-8 w-8">

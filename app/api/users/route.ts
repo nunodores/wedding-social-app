@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { Guest, Follow } from '@/lib/models';
+import { Guest } from '@/lib/models';
 import { getSession } from '@/lib/auth-server';
-import { cloudinary } from '@/lib/cloudinary';
 
 export async function POST(request: Request) {
   try {
@@ -31,67 +30,10 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
-        // Get follow counts
-        const followersCount = await Follow.count({
-          where: { following_id: user_id }
-        });
-
-        const followingCount = await Follow.count({
-          where: { follower_id: user_id }
-        });
-
-        // Check if current user follows this user
-        const isFollowing = await Follow.findOne({
-          where: {
-            follower_id: session.id,
-            following_id: user_id
-          }
-        });
 
         return NextResponse.json({
           ...user.toJSON(),
-          followersCount,
-          followingCount,
-          isFollowing: !!isFollowing
         });
-      }
-
-      case 'follow': {
-        const { user_id } = payload;
-        
-        const session = await getSession();
-        if (!session) {
-          return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        if (session.id === user_id) {
-          return NextResponse.json({ error: 'Cannot follow yourself' }, { status: 400 });
-        }
-
-        await Follow.create({
-          follower_id: session.id,
-          following_id: user_id
-        });
-
-        return NextResponse.json({ success: true });
-      }
-
-      case 'unfollow': {
-        const { user_id } = payload;
-        
-        const session = await getSession();
-        if (!session) {
-          return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        await Follow.destroy({
-          where: {
-            follower_id: session.id,
-            following_id: user_id
-          }
-        });
-
-        return NextResponse.json({ success: true });
       }
 
       case 'update-profile': {
