@@ -63,7 +63,6 @@ export async function signInGuest(email: string, password: string, wedding_event
   // Set cookie
   const cookieStore = cookies();
   cookieStore.set('auth_token', token, {
-    httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     maxAge: 60 * 60 * 24 * 7, // 7 days
@@ -104,7 +103,6 @@ export async function registerGuest(name: string, email: string, password: strin
   // Set cookie
   const cookieStore = cookies();
   cookieStore.set('auth_token', token, {
-    httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     maxAge: 60 * 60 * 24 * 7, // 7 days
