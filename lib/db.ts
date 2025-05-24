@@ -13,7 +13,10 @@ export const sequelize = new Sequelize(process.env.NEXT_PUBLIC_DATABASE_URL, {
       require: true,
       rejectUnauthorized: false
     } : false,
-    connectTimeout: 60000
+    connectTimeout: 60000,
+    encrypt: false,
+    trustServerCertificate: true,
+    enableArithAbort: true
   },
   pool: {
     max: 5,
