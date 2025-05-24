@@ -9,14 +9,8 @@ export const sequelize = new Sequelize(process.env.NEXT_PUBLIC_DATABASE_URL, {
   dialectModule: require('mysql2'),
   logging: false,
   dialectOptions: {
-    ssl: process.env.NODE_ENV === 'production' ? {
-      require: true,
-      rejectUnauthorized: false
-    } : false,
+    ssl: false,
     connectTimeout: 60000,
-    encrypt: false,
-    trustServerCertificate: true,
-    enableArithAbort: true
   },
   pool: {
     max: 5,
