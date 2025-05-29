@@ -1,3 +1,5 @@
+'use server';
+
 import { compare, hash } from 'bcryptjs';
 import { sign, verify } from 'jsonwebtoken';
 import { cookies } from 'next/headers';
@@ -5,9 +7,7 @@ import { Guest, WeddingEvent } from './models';
 
 const JWT_SECRET = process.env.NEXT_PUBLIC_JWT_SECRET!;
 
-export type { Guest, WeddingEvent };
-
-export async function getSession(): Promise<Guest | null> {
+export async function getSession() {
   const cookieStore = cookies();
   const token = cookieStore.get('auth_token')?.value;
 
@@ -29,7 +29,7 @@ export async function signOut() {
   return { success: true };
 }
 
-export async function verifyEventAccess(slug: string, password: string): Promise<WeddingEvent | null> {
+export async function verifyEventAccess(slug: string, password: string) {
   const event = await WeddingEvent.findOne({ where: { slug } });
 
   if (!event) return null;
@@ -57,15 +57,15 @@ export async function signInGuest(email: string, password: string, wedding_event
     throw new Error('Invalid credentials');
   }
 
-  // Generate JWT token
   const token = sign({ id: guest.id }, JWT_SECRET, { expiresIn: '7d' });
 
-  // Set cookie
   const cookieStore = cookies();
   cookieStore.set('auth_token', token, {
+    httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     maxAge: 60 * 60 * 24 * 7, // 7 days
+    path: '/',
   });
 
   return {
@@ -74,7 +74,6 @@ export async function signInGuest(email: string, password: string, wedding_event
 }
 
 export async function registerGuest(name: string, email: string, password: string, wedding_event_id: string) {
-  // Check if guest already exists
   const existingGuest = await Guest.findOne({
     where: {
       email,
@@ -86,10 +85,8 @@ export async function registerGuest(name: string, email: string, password: strin
     throw new Error('Guest already exists');
   }
 
-  // Hash password
   const hashedPassword = await hash(password, 12);
 
-  // Create guest
   const guest = await Guest.create({
     name,
     email,
@@ -97,15 +94,15 @@ export async function registerGuest(name: string, email: string, password: strin
     wedding_event_id,
   });
 
-  // Generate JWT token
   const token = sign({ id: guest.id }, JWT_SECRET, { expiresIn: '7d' });
 
-  // Set cookie
   const cookieStore = cookies();
   cookieStore.set('auth_token', token, {
+    httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge: 60 * 60 * 24 * 7,
+    path: '/',
   });
 
   return {
