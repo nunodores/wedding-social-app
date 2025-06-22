@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { Guest } from '@/lib/models';
+import { Guest } from '@/lib/models/guest';
 import { getSession } from '@/lib/auth-server';
 
 export async function POST(request: Request) {

@@ -10,13 +10,12 @@ import { Story, createStory } from '@/lib/stories';
 import { Guest } from '@/lib/auth';
 import { StoriesViewer } from './stories-viewer';
 import { toast } from 'sonner';
-import { WeddingEvent } from '@/lib/models';
-import { DialogTitle } from '@radix-ui/react-dialog';
+import { Event } from '@/lib/models';
 
 interface StoriesCarouselProps {
   stories: Story[];
   currentGuest: Guest;
-  weddingEvent: WeddingEvent;
+  weddingEvent: Event;
   onStoryCreated: () => void;
 }
 
@@ -43,8 +42,8 @@ export function StoriesCarousel({
 
   const guestStoriesList = Object.entries(guestStories).map(([guestId, stories]) => ({
     guestId,
-    guestName: stories[0].Guest?.name || 'Guest',
-    guestAvatar: stories[0].Guest?.avatar_url,
+    guestName: stories[0].guest?.name || 'Guest',
+    guestAvatar: stories[0].guest?.avatar_url,
     stories,
   }));
 

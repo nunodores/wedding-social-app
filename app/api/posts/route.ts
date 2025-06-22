@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { Guest, Like, Post, Comment, Notification } from '@/lib/models';
+import { Guest, Like, Post, Comment, Notification } from '@/lib/models/index';
 import { Op } from 'sequelize';
 import { sendNotification, sendPostCommentNotification, sendPostLikeNotification } from '@/lib/firebase-admin';
 import { getSession } from '@/lib/auth-server';
@@ -13,6 +13,8 @@ export async function POST(req: Request) {
       case 'create-post': {
         const { content, wedding_event_id, guest_id, video_url, image_url } = payload;
         const post = await Post.create({
+          id: crypto.randomUUID(),
+
           content,
           image_url,
           video_url,
@@ -99,6 +101,8 @@ export async function POST(req: Request) {
       case 'add-comment': {
         const { post_id, guest_id, content } = payload;
         const comment = await Comment.create({
+          id: crypto.randomUUID(),
+
           content,
           guest_id,
           post_id,
@@ -141,7 +145,8 @@ export async function POST(req: Request) {
           );
 
           // Save notification in database
-          await Notification.create({
+          await Notification.create({            
+            id: crypto.randomUUID(),
             to_guest_id: postOwner.id,
             from_guest_id: session?.id || null,
             post_id: post_id,
@@ -171,6 +176,7 @@ export async function POST(req: Request) {
           return NextResponse.json({ liked: false });
         } else {
           await Like.create({
+            id: crypto.randomUUID(),
             post_id,
             guest_id,
           });
@@ -191,6 +197,7 @@ export async function POST(req: Request) {
 
             // Save notification in the DB
             await Notification.create({
+              id: crypto.randomUUID(),
               to_guest_id: postOwner.id,
               from_guest_id: session.id || null,
               post_id: post_id || null,

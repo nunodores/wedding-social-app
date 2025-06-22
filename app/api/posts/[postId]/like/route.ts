@@ -29,7 +29,7 @@ export async function POST(
     });
 
     // Get the post owner's FCM token
-    const postOwner = await Guest.findByPk(post.guest_id);
+    const postOwner = await Guest.findByPk(post.guest_id)
     
     if (postOwner?.fcm_token && postOwner.id !== session.id) {
       // Send notification to post owner

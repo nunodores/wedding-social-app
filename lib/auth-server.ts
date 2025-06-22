@@ -3,7 +3,7 @@
 import { compare, hash } from 'bcryptjs';
 import { sign, verify } from 'jsonwebtoken';
 import { cookies } from 'next/headers';
-import { Guest, WeddingEvent } from './models';
+import { Guest, Event } from './models';
 
 const JWT_SECRET = process.env.NEXT_PUBLIC_JWT_SECRET!;
 
@@ -29,12 +29,16 @@ export async function signOut() {
   return { success: true };
 }
 
-export async function verifyEventAccess(slug: string, password: string) {
-  const event = await WeddingEvent.findOne({ where: { slug } });
+export async function verifyEventAccess(event_code: string, hashed_password: string) {
+  const event = await Event.findOne({ where: { event_code } });
 
   if (!event) return null;
-
-  const passwordValid = await compare(password, event.hashedPassword);
+  console.log('====================================');
+  console.log(event)
+  console.log(hashed_password);
+  console.log(event.hashed_password);
+  console.log('====================================');
+  const passwordValid = await compare(hashed_password, event.hashed_password);
   if (!passwordValid) return null;
 
   return event.toJSON();
@@ -47,12 +51,14 @@ export async function signInGuest(email: string, password: string, wedding_event
       wedding_event_id,
     },
   });
-
+  console.log('====================================');
+  console.log(guest);
+  console.log('====================================');
   if (!guest) {
     throw new Error('Invalid credentials');
   }
 
-  const passwordValid = await compare(password, guest.hashedPassword);
+  const passwordValid = await compare(password, guest.hashed_password);
   if (!passwordValid) {
     throw new Error('Invalid credentials');
   }
@@ -85,12 +91,13 @@ export async function registerGuest(name: string, email: string, password: strin
     throw new Error('Guest already exists');
   }
 
-  const hashedPassword = await hash(password, 12);
+  const hashed_password = await hash(password, 12);
 
   const guest = await Guest.create({
+    id: crypto.randomUUID(),
     name,
     email,
-    hashedPassword,
+    hashed_password,
     wedding_event_id,
   });
 

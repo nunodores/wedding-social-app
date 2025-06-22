@@ -32,9 +32,9 @@ export async function POST(req: Request) {
         const stories = await Story.findAll({
           where: { 
             wedding_event_id,
-            expiresAt: {
-              [Op.gt]: new Date(), // Only get non-expired stories
-            }
+            // expiresAt: {
+            //   [Op.gt]: new Date(), // Only get non-expired stories
+            // }
           },
           include: [{
             model: Guest,

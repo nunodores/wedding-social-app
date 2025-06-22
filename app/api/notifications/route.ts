@@ -16,7 +16,7 @@ export async function GET() {
       where: { to_guest_id: session.id },
       include: [{
         model: Guest,
-        as: 'fromGuest',
+        as: 'from',
         attributes: ['name', 'avatar_url'],
       }],
       order: [['createdAt', 'DESC']],

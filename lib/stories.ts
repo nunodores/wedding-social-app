@@ -18,8 +18,6 @@ export async function createStory(
   mediaFile: File
 ): Promise<Story> {
   // Calculate expiration time (24 hours from now)
-  const expiresAt = new Date();
-  expiresAt.setHours(expiresAt.getHours() + 24);
 
   // Upload the media file
   const isImage = mediaFile.type.startsWith('image/');
@@ -33,7 +31,6 @@ export async function createStory(
       media_url,
       guest_id,
       wedding_event_id,
-      expires_at: expiresAt.toISOString(),
     }),
   });
 

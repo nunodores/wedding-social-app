@@ -30,9 +30,7 @@ export function StoriesViewer({ storyGroups, initialIndex, onClose }: StoriesVie
   const currentGroup = storyGroups[currentGroupIndex];
   const currentStory = currentGroup?.stories[currentStoryIndex];
   const isVideo = currentStory && !currentStory.media_url.includes('images');
-  console.log('====================================');
-  console.log(storyGroups);
-  console.log('====================================');
+
   // Function to go to next story
   const goToNextStory = () => {
     if (currentGroup) {

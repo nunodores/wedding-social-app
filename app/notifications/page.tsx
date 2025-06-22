@@ -9,20 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCurrentGuest } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
+import { Notification} from '@/lib/models';
 
-interface Notification {
-  id: string;
-  type: 'like' | 'comment' | 'follow';
-  from_guest_id: string | null;
-  to_guest_id: string;
-  post_id: string | null;
-  read_post: boolean;
-  createdAt: string;
-  fromGuest?: {
-    name: string;
-    avatar_url?: string;
-  };
-}
+
 
 export default function NotificationsPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -77,7 +66,7 @@ export default function NotificationsPage() {
   };
 
   const getNotificationMessage = (notification: Notification) => {
-    const userName = notification.fromGuest?.name || 'Someone';
+    const userName = notification.from?.name || 'Someone';
     
     switch (notification.type) {
       case 'like':

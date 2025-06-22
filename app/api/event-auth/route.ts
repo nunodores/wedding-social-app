@@ -5,9 +5,9 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
-    const { slug, password } = await request.json();
+    const { event_code, hashed_password } = await request.json();
 
-    if (!slug || !password) {
+    if (!event_code || !hashed_password) {
       return NextResponse.json(
         { message: 'Missing required fields' },
         { status: 400 }
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     }
 
     // Verify wedding event access
-    const event = await verifyEventAccess(slug, password);
+    const event = await verifyEventAccess(event_code, hashed_password);
     
     if (!event) {
       return NextResponse.json(

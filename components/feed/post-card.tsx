@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Heart, MessageCircle, Share2 } from 'lucide-react';
+import { Heart, MessageCircle } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -20,28 +20,39 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) {
-  const [isLiked, setIsLiked] = useState(post.Likes?.some(like => like.guest_id === currentGuestId) || false);
-  const [likesCount, setLikesCount] = useState(post.Likes?.length || 0);
-  const [commentsCount, setCommentsCount] = useState(post.Comments?.length || 0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [commentsCount, setCommentsCount] = useState(0);
   const [comment, setComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
-  const [comments, setComments] = useState<Comment[]>(post.Comments || []);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    setIsLiked(post.likes?.some(like => like.guest_id === currentGuestId) || false);
+    console.log('====================================');
+    console.log(post);
+    console.log(currentGuestId);
+    console.log(post.likes?.some(like => like.guest_id === currentGuestId) );
+    console.log('====================================');
+    setLikesCount(post.likes?.length || 0);
+    setCommentsCount(post.comments?.length || 0);
+    setComments(post.comments || []);
+  }, [post, currentGuestId]);
 
   const handleLikeToggle = async () => {
     try {
       const newIsLiked = await toggleLike(post.id, currentGuestId, isLiked);
       setIsLiked(newIsLiked);
       setLikesCount(prev => newIsLiked ? prev + 1 : prev - 1);
-      
-      // Update the post in parent component
+
       onUpdatePost({
         ...post,
-        Likes: newIsLiked 
-          ? [...(post.Likes || []), { guest_id: currentGuestId }]
-          : (post.Likes || []).filter(like => like.guest_id !== currentGuestId),
+        likes: newIsLiked
+          ? [...(post.likes || []), { guest_id: currentGuestId }]
+          : (post.likes || []).filter(like => like.guest_id !== currentGuestId),
       });
     } catch (error) {
       console.error('Failed to toggle like:', error);
@@ -51,18 +62,17 @@ export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!comment.trim() || isSubmittingComment) return;
-    
+
     setIsSubmittingComment(true);
     try {
       const newComment = await addComment(post.id, currentGuestId, comment);
       setComments(prev => [...prev, newComment]);
       setComment('');
       setCommentsCount(prev => prev + 1);
-      
-      // Update the post in parent component
+
       onUpdatePost({
         ...post,
-        Comments: [...(post.Comments || []), newComment],
+        comments: [...(post.comments || []), newComment],
       });
     } catch (error) {
       console.error('Failed to add comment:', error);
@@ -87,7 +97,7 @@ export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) 
   };
 
   const handleProfileClick = () => {
-    if(post.guest_id  === currentGuestId)  {
+    if (post.guest_id === currentGuestId) {
       router.push(`/profile`);
       return;
     }
@@ -98,21 +108,21 @@ export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) 
     <>
       <Card className="w-full overflow-hidden transition-all duration-200 hover:shadow-md">
         <CardHeader className="p-4 flex flex-row items-center space-x-4 space-y-0">
-          <Avatar 
+          <Avatar
             className="cursor-pointer hover:opacity-80 transition-opacity"
             onClick={handleProfileClick}
           >
-            <AvatarImage src={post.Guest?.avatar_url} alt={post.Guest?.name || 'Guest'} />
+            <AvatarImage src={post.guest?.avatar_url} alt={post.guest?.name || 'Guest'} />
             <AvatarFallback>
-              {post.Guest?.name?.substring(0, 2).toUpperCase() || 'GU'}
+              {post.guest?.name?.substring(0, 2).toUpperCase() || 'GU'}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <div 
+            <div
               className="font-semibold cursor-pointer hover:underline"
               onClick={handleProfileClick}
             >
-              {post.Guest?.name || 'Guest'}
+              {post.guest?.name || 'Guest'}
             </div>
             <div className="text-sm text-muted-foreground">
               {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
@@ -125,18 +135,18 @@ export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) 
           )}
           {post.image_url && (
             <div className="relative aspect-square w-full overflow-hidden">
-              <img 
-                src={post.image_url} 
-                alt="Post" 
+              <img
+                src={post.image_url}
+                alt="Post"
                 className="object-cover w-full h-full"
               />
             </div>
           )}
           {post.video_url && (
             <div className="relative aspect-video w-full overflow-hidden">
-              <video 
-                src={post.video_url} 
-                controls 
+              <video
+                src={post.video_url}
+                controls
                 className="object-cover w-full h-full"
               />
             </div>
@@ -154,9 +164,9 @@ export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) 
             </div>
           </div>
           <div className="flex items-center justify-between w-full border-t border-b py-1">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               className={cn(
                 "flex-1 flex items-center gap-1",
                 isLiked && "text-red-500"
@@ -166,8 +176,8 @@ export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) 
               <Heart size={18} className={cn(isLiked && "fill-red-500")} />
               {isLiked ? 'Liked' : 'Like'}
             </Button>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               className="flex-1 flex items-center gap-1"
               onClick={handleOpenComments}
@@ -175,7 +185,6 @@ export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) 
               <MessageCircle size={18} />
               Comment
             </Button>
-           
           </div>
           <form onSubmit={handleSubmitComment} className="flex items-center space-x-2 w-full mt-2">
             <Avatar className="h-8 w-8">
@@ -187,9 +196,9 @@ export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) 
               onChange={(e) => setComment(e.target.value)}
               className="flex-1"
             />
-            <Button 
-              type="submit" 
-              size="sm" 
+            <Button
+              type="submit"
+              size="sm"
               disabled={!comment.trim() || isSubmittingComment}
             >
               Post
@@ -206,18 +215,17 @@ export function PostCard({ post, currentGuestId, onUpdatePost }: PostCardProps) 
         isLoading={isLoadingComments}
         onAddComment={async (content) => {
           if (!content.trim()) return false;
-          
+
           try {
             const newComment = await addComment(post.id, currentGuestId, content);
             setComments(prev => [...prev, newComment]);
             setCommentsCount(prev => prev + 1);
-            
-            // Update the post in parent component
+
             onUpdatePost({
               ...post,
-              Comments: [...(post.Comments || []), newComment],
+              comments: [...(post.comments || []), newComment],
             });
-            
+
             return true;
           } catch (error) {
             console.error('Failed to add comment:', error);

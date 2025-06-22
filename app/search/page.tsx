@@ -42,11 +42,11 @@ export default function SearchPage() {
         // Extract unique guests from posts
         const uniqueGuests = new Map();
         fetchedPosts.forEach(post => {
-          if (post.Guest && !uniqueGuests.has(post.guest_id)) {
+          if (post.guest && !uniqueGuests.has(post.guest_id)) {
             uniqueGuests.set(post.guest_id, {
               id: post.guest_id,
-              name: post.Guest.name,
-              avatarUrl: post.Guest.avatar_url,
+              name: post.guest.name,
+              avatarUrl: post.guest.avatar_url,
             });
           }
         });
@@ -66,7 +66,7 @@ export default function SearchPage() {
   const filteredPosts = searchQuery 
     ? posts.filter(post => 
         post.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.Guest?.name.toLowerCase().includes(searchQuery.toLowerCase())
+        post.guest?.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : posts;
     
@@ -130,7 +130,7 @@ export default function SearchPage() {
                           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <div className="text-white text-sm font-medium">
                               <AvatarGroup 
-                                users={[{ name: post.Guest?.name || 'Guest', avatarUrl: post.Guest?.avatar_url }]}
+                                users={[{ name: post.guest?.name || 'Guest', avatarUrl: post.guest?.avatar_url }]}
                                 size="sm"
                               />
                             </div>

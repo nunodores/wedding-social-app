@@ -12,8 +12,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { toast } from 'sonner';
 
 const eventAccessSchema = z.object({
-  slug: z.string().min(1, 'Event code is required'),
-  password: z.string().min(1, 'Password is required'),
+  event_code: z.string().min(1, 'Event code is required'),
+  hashed_password: z.string().min(1, 'Password is required'),
 });
 
 type EventAccessFormValues = z.infer<typeof eventAccessSchema>;
@@ -25,8 +25,8 @@ export function EventAccessForm() {
   const form = useForm<EventAccessFormValues>({
     resolver: zodResolver(eventAccessSchema),
     defaultValues: {
-      slug: '',
-      password: '',
+      event_code: '',
+      hashed_password: '',
     },
   });
 
@@ -51,7 +51,7 @@ export function EventAccessForm() {
       
       // Store wedding event ID in session storage for the next step
       sessionStorage.setItem('weddingEventId', data.weddingEventId);
-      sessionStorage.setItem('weddingEventSlug', values.slug);
+      sessionStorage.setItem('weddingEventSlug', values.event_code);
       
       toast.success('Event access granted!');
       router.push('/login/guest');
@@ -75,7 +75,7 @@ export function EventAccessForm() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="slug"
+              name="event_code"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Event Code</FormLabel>
@@ -92,7 +92,7 @@ export function EventAccessForm() {
             />
             <FormField
               control={form.control}
-              name="password"
+              name="hashed_password"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Password</FormLabel>
