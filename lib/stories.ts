@@ -21,7 +21,7 @@ export async function createStory(
 
   // Upload the media file
   const isImage = mediaFile.type.startsWith('image/');
-  const media_url = await uploadFile(mediaFile, isImage ? 'image' : 'video');
+  const media_url = await uploadFile(mediaFile, isImage ? 'image' : 'video',`wedding-app/${wedding_event_id}/stories`);
 
   const response = await fetch('/api/stories', {
     method: 'POST',

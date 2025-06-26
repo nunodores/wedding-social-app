@@ -9,11 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { createPost } from '@/lib/posts';
 import { Guest } from '@/lib/auth';
 import { toast } from 'sonner';
-import { WeddingEvent } from '@/lib/models';
+import { Event } from '@/lib/models';
 
 interface CreatePostFormProps {
   guest: Guest;
-  weddingEvent: WeddingEvent;
+  weddingEvent: Event;
   onPostCreated: () => void;
 }
 

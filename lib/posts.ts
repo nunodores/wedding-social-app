@@ -2,10 +2,11 @@ import { Post, Guest, Comment, Like } from './models';
 
 export type { Post, Comment, Like };
 
-export async function uploadFile(file: File, type: 'image' | 'video'): Promise<string> {
+export async function uploadFile(file: File, type: 'image' | 'video', folder: string): Promise<string> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('type', type);
+  formData.append('folder', folder);
 
   const response = await fetch('/api/upload', {
     method: 'POST',
@@ -40,11 +41,11 @@ export async function createPost(
   let video_url: string | undefined;
 
   if (imageFile) {
-    image_url = await uploadFile(imageFile, 'image');
+    image_url = await uploadFile(imageFile, 'image', `wedding-app/${wedding_event_id}/posts`);
   }
 
   if (videoFile) {
-    video_url = await uploadFile(videoFile, 'video');
+    video_url = await uploadFile(videoFile, 'video',`wedding-app/${wedding_event_id}/posts`);
   }
 
   const response = await fetch('/api/posts', {
