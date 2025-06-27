@@ -1,6 +1,5 @@
 import { DataTypes, Model } from 'sequelize';
 import { sequelize } from '../db';
-import { Event } from './event';
 
 export class Payment extends Model {}
 
