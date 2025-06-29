@@ -45,6 +45,10 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    
+    /* Custom primary color variables */
+    --primary-custom: #000000;
+    --primary-hover: 0 0% 19%;
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -83,6 +87,7 @@
   }
 }
 
+/* Custom primary color utility classes */
 .text-primary-custom {
   color: var(--primary-custom, hsl(var(--primary)));
 }
@@ -101,4 +106,47 @@
 
 .hover\:text-primary-custom:hover {
   color: var(--primary-custom, hsl(var(--primary)));
+}
+
+/* Override button primary styles to use custom color */
+.btn-primary {
+  background-color: var(--primary-custom, hsl(var(--primary)));
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-custom, hsl(var(--primary-hover)));
+}
+
+/* Font family classes for wedding themes */
+.font-playfair {
+  font-family: 'Playfair Display', serif;
+}
+
+.font-dancing {
+  font-family: 'Dancing Script', cursive;
+}
+
+.font-vibes {
+  font-family: 'Great Vibes', cursive;
+}
+
+.font-cinzel {
+  font-family: 'Cinzel', serif;
+}
+
+.font-cormorant {
+  font-family: 'Cormorant Garamond', serif;
+}
+
+.font-montserrat {
+  font-family: 'Montserrat', sans-serif;
+}
+
+.font-lora {
+  font-family: 'Lora', serif;
+}
+
+.font-poppins {
+  font-family: 'Poppins', sans-serif;
 }

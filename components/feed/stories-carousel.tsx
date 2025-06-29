@@ -139,7 +139,7 @@ export function StoriesCarousel({
           {guestStoriesList.map((storyGroup, index) => (
             <div key={storyGroup.guestId} className="flex flex-col items-center space-y-1">
               <button
-                className="h-16 w-16 rounded-full p-[2px] bg-gradient-to-br from-pink-500 via-purple-500 to-orange-400 flex items-center justify-center"
+                className="h-16 w-16 rounded-full p-[2px] bg-primary flex items-center justify-center"
                 onClick={() => handleViewStory(index)}
               >
                 <Avatar className="h-full w-full border-2 border-background">

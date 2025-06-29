@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Image, Film, X } from 'lucide-react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Image, Film } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { createPost } from '@/lib/posts';
 import { Guest } from '@/lib/auth';
 import { toast } from 'sonner';
@@ -49,8 +49,7 @@ export function CreatePostForm({ guest, weddingEvent, onPostCreated }: CreatePos
     setMediaType(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if ((!content.trim() && !mediaFile) || isSubmitting) return;
 
     setIsSubmitting(true);
@@ -76,100 +75,105 @@ export function CreatePostForm({ guest, weddingEvent, onPostCreated }: CreatePos
   };
 
   return (
-    <Card className="w-full">
-      <form onSubmit={handleSubmit}>
-        <CardContent className="p-4">
-          <div className="flex space-x-3">
-            <Avatar>
-              <AvatarImage src={guest.avatar_url} alt={guest.name} />
-              <AvatarFallback>{guest.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <Textarea
+    <Card className="w-full shadow-sm border-gray-100">
+      <CardContent className="p-4">
+        <div className="flex items-center space-x-3">
+          <Avatar className="h-12 w-12">
+            <AvatarImage src={guest.avatar_url} alt={guest.name} />
+            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white font-medium">
+              {guest.name.substring(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          
+          <div className="flex-1">
+        
+              <Input
                 placeholder={`Share a moment from ${weddingEvent.name}...`}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="resize-none min-h-[100px] focus-visible:ring-offset-0"
+                className="border-0 bg-gray-50 rounded-full px-4 py-3 focus-visible:ring-0 focus-visible:ring-offset-0"
+                autoFocus
               />
-            </div>
           </div>
+        </div>
 
-          {mediaPreview && (
-            <div className="mt-3 relative">
+        {mediaPreview && (
+          <div className="mt-4 relative">
+            <button
+              className="absolute top-2 right-2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition-colors z-10"
+              onClick={handleRemoveMedia}
+              type="button"
+            >
+              ×
+            </button>
+            {mediaType === 'image' ? (
+              <img 
+                src={mediaPreview} 
+                alt="Preview" 
+                className="w-full h-auto rounded-lg max-h-[300px] object-contain bg-gray-100"
+              />
+            ) : (
+              <video 
+                src={mediaPreview} 
+                controls 
+                className="w-full h-auto rounded-lg max-h-[300px]" 
+              />
+            )}
+          </div>
+        )}
+
+
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+            <div className="flex space-x-4">
               <Button
-                variant="destructive"
-                size="icon"
-                className="absolute top-2 right-2 w-8 h-8 rounded-full"
-                onClick={handleRemoveMedia}
                 type="button"
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-2   px-3 py-2 rounded-lg font-medium"
+                onClick={() => imageInputRef.current?.click()}
+                disabled={isSubmitting}
               >
-                <X size={16} />
+                <Image size={20} />
+                Photo
               </Button>
-              {mediaType === 'image' ? (
-                <img 
-                  src={mediaPreview} 
-                  alt="Preview" 
-                  className="w-full h-auto rounded-md max-h-[300px] object-contain bg-muted"
-                />
-              ) : (
-                <video 
-                  src={mediaPreview} 
-                  controls 
-                  className="w-full h-auto rounded-md max-h-[300px]" 
-                />
-              )}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-2  px-3 py-2 rounded-lg font-medium"
+                onClick={() => videoInputRef.current?.click()}
+                disabled={isSubmitting}
+              >
+                <Film size={20} />
+                Video
+              </Button>
             </div>
-          )}
-
-          <input
-            type="file"
-            ref={imageInputRef}
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => handleMediaChange(e, 'image')}
-          />
-          <input
-            type="file"
-            ref={videoInputRef}
-            accept="video/*"
-            className="hidden"
-            onChange={(e) => handleMediaChange(e, 'video')}
-          />
-        </CardContent>
-
-        <CardFooter className="px-4 py-3 border-t flex justify-between">
-          <div className="flex space-x-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground flex items-center gap-1"
-              onClick={() => imageInputRef.current?.click()}
-              disabled={!!mediaFile || isSubmitting}
+            
+            <Button 
+              onClick={handleSubmit}
+              disabled={(!content.trim() && !mediaFile) || isSubmitting}
+              className=" text-white px-6 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Image size={18} />
-              Photo
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground flex items-center gap-1"
-              onClick={() => videoInputRef.current?.click()}
-              disabled={!!mediaFile || isSubmitting}
-            >
-              <Film size={18} />
-              Video
+              {isSubmitting ? 'Posting...' : 'Post'}
             </Button>
           </div>
-          <Button 
-            type="submit" 
-            disabled={(!content.trim() && !mediaFile) || isSubmitting}
-          >
-            {isSubmitting ? 'Posting...' : 'Post'}
-          </Button>
-        </CardFooter>
-      </form>
+
+
+        <input
+          type="file"
+          ref={imageInputRef}
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => handleMediaChange(e, 'image')}
+        />
+        <input
+          type="file"
+          ref={videoInputRef}
+          accept="video/*"
+          className="hidden"
+          onChange={(e) => handleMediaChange(e, 'video')}
+        />
+      </CardContent>
     </Card>
   );
 }

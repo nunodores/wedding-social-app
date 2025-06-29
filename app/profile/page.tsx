@@ -32,7 +32,7 @@ export default function ProfilePage() {
         
         // Load posts by this guest
         const allPosts = await getPosts(currentGuest.wedding_event_id, currentGuest.id);
-        const guestPosts = allPosts.filter(post => post.guest_id === currentGuest.id);
+        const guestPosts = allPosts.filter(post => post.guest_id === currentGuest.id && (post.image_url || post.video_url));
         setPosts(guestPosts);
       } catch (error) {
         console.error('Error loading profile data:', error);
@@ -107,12 +107,9 @@ export default function ProfilePage() {
           
           {/* Profile tabs */}
           <Tabs defaultValue="posts">
-            <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="posts">
                 <Grid3X3 className="h-5 w-5" />
-              </TabsTrigger>
-              <TabsTrigger value="saved">
-                <Bookmark className="h-5 w-5" />
               </TabsTrigger>
               <TabsTrigger value="tagged">
                 <Camera className="h-5 w-5" />
@@ -153,15 +150,6 @@ export default function ProfilePage() {
                   ))}
                 </div>
               )}
-            </TabsContent>
-            
-            <TabsContent value="saved">
-              <div className="text-center py-8">
-                <h3 className="font-semibold text-lg mb-2">No saved posts</h3>
-                <p className="text-muted-foreground">
-                  Posts you save will appear here.
-                </p>
-              </div>
             </TabsContent>
             
             <TabsContent value="tagged">

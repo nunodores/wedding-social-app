@@ -44,6 +44,48 @@ export function AppLayout({ children }: AppLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Apply primary color to CSS custom properties
+  useEffect(() => {
+    if (event?.primary_color) {
+      // Convert hex to HSL for CSS custom properties
+      const hexToHsl = (hex: string) => {
+        const r = parseInt(hex.slice(1, 3), 16) / 255;
+        const g = parseInt(hex.slice(3, 5), 16) / 255;
+        const b = parseInt(hex.slice(5, 7), 16) / 255;
+
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h = 0, s = 0, l = (max + min) / 2;
+
+        if (max !== min) {
+          const d = max - min;
+          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+          switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+          }
+          h /= 6;
+        }
+
+        return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+      };
+
+      const hslColor = hexToHsl(event.primary_color);
+      
+      // Apply the primary color to CSS custom properties
+      document.documentElement.style.setProperty('--primary', hslColor);
+      document.documentElement.style.setProperty('--primary-custom', event.primary_color);
+      
+      // Also set a lighter version for hover states
+      const lightHsl = hslColor.replace(/(\d+)%\)$/, (match, lightness) => {
+        const newLightness = Math.min(parseInt(lightness) + 10, 95);
+        return `${newLightness}%)`;
+      });
+      document.documentElement.style.setProperty('--primary-hover', lightHsl);
+    }
+  }, [event]);
+
   useEffect(() => {
     async function checkAuth() {
       try {
@@ -59,7 +101,6 @@ export function AppLayout({ children }: AppLayoutProps) {
           setGuestId(guest.id);
           setWeddingEventId(guest.wedding_event_id);
           setEvent(eventData);
-
 
           // Request notification permission
           const fcmToken = await requestNotificationPermission();
@@ -121,6 +162,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       toast.error('Failed to sign out');
     }
   };
+  
   const FONT_OPTIONS = [
     { name: 'Playfair Display', value: 'font-playfair', class: 'font-playfair', description: 'Elegant serif' },
     { name: 'Dancing Script', value: 'font-dancing', class: 'font-dancing', description: 'Romantic script' },
@@ -133,18 +175,17 @@ export function AppLayout({ children }: AppLayoutProps) {
   ];
   
   const renderLogo = () => {
-
     if (!event) {
       return <h1 className="text-xl font-bold">Heartgram</h1>;
     }
 
     if (event.use_logo_text) {
-      
+      const selectedFont = FONT_OPTIONS.find((font) => font.value === event.font_name);
       return (
         <h1 
           className="text-xl font-bold"
           style={{ 
-            fontFamily: FONT_OPTIONS.find((font)=> font.value === event.font_name)?.name || 'inherit',
+            fontFamily: selectedFont?.name || 'inherit',
             color: event.primary_color || 'inherit'
           }}
         >
@@ -207,12 +248,13 @@ export function AppLayout({ children }: AppLayoutProps) {
             <Button
               variant="ghost"
               size="icon"
-              className={pathname === '/notifications' ? 'text-primary relative' : 'text-muted-foreground relative'}
+              className={`relative ${pathname === '/notifications' ? 'text-primary' : 'text-muted-foreground'}`}
               onClick={() => {
                 router.push('/notifications');
               }}
+              style={pathname === '/notifications' ? { color: event?.primary_color || undefined } : {}}
             >
-              <Bell size={24} />
+              <Bell size={24} className='text-primary' />
               {unreadNotifications > 0 && (
                 <Badge 
                   variant="destructive" 
@@ -236,7 +278,10 @@ export function AppLayout({ children }: AppLayoutProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem className="flex items-center gap-2">
+                <DropdownMenuItem 
+                  className="flex items-center gap-2"
+                  onClick={() => router.push('/profile')}
+                >
                   <User size={16} />
                   <span>Profile</span>
                 </DropdownMenuItem>
