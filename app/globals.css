@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Great+Vibes&family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600;700&family=Lora:wght@400;500;600&family=Poppins:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -79,4 +81,24 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.text-primary-custom {
+  color: var(--primary-custom, hsl(var(--primary)));
+}
+
+.bg-primary-custom {
+  background-color: var(--primary-custom, hsl(var(--primary)));
+}
+
+.border-primary-custom {
+  border-color: var(--primary-custom, hsl(var(--primary)));
+}
+
+.hover\:bg-primary-custom:hover {
+  background-color: var(--primary-custom, hsl(var(--primary)));
+}
+
+.hover\:text-primary-custom:hover {
+  color: var(--primary-custom, hsl(var(--primary)));
 }

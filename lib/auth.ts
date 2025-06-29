@@ -1,8 +1,8 @@
 'use client';
 
-import { Guest } from './models';
+import { Guest, Event } from './models';
 
-export type { Guest };
+export type { Guest, Event };
 
 export async function getCurrentGuest(): Promise<Guest | null> {
   try {
@@ -11,6 +11,17 @@ export async function getCurrentGuest(): Promise<Guest | null> {
     return response.json();
   } catch (error) {
     console.error('Error getting current guest:', error);
+    return null;
+  }
+}
+
+export async function getCurrentEvent(): Promise<Event | null> {
+  try {
+    const response = await fetch('/api/auth/event');
+    if (!response.ok) return null;
+    return response.json();
+  } catch (error) {
+    console.error('Error getting current event:', error);
     return null;
   }
 }

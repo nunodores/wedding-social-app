@@ -23,10 +23,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getCurrentGuest, signOut } from '@/lib/auth';
+import { getCurrentGuest, getCurrentEvent } from '@/lib/auth';
 import { requestNotificationPermission, onForegroundMessage } from '@/lib/firebase';
 import { toast } from 'sonner';
-import { NotificationBadge } from '@/components/notification-badge';
+import { signOut } from '@/lib/auth-server';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -40,6 +40,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [guestId, setGuestId] = useState<string | null>(null);
   const [weddingEventId, setWeddingEventId] = useState<string | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [event, setEvent] = useState<any>(null);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -49,6 +50,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         setIsLoading(true);
         
         const guest = await getCurrentGuest();
+        const eventData = await getCurrentEvent();
         
         if (guest) {
           setIsAuthenticated(true);
@@ -56,6 +58,8 @@ export function AppLayout({ children }: AppLayoutProps) {
           setAvatarUrl(guest.avatar_url || null);
           setGuestId(guest.id);
           setWeddingEventId(guest.wedding_event_id);
+          setEvent(eventData);
+
 
           // Request notification permission
           const fcmToken = await requestNotificationPermission();
@@ -91,7 +95,6 @@ export function AppLayout({ children }: AppLayoutProps) {
         if (response.ok) {
           const data = await response.json();
           setUnreadNotifications(data.count);
-        
         }
       } catch (error) {
         console.error('Error fetching unread notifications:', error);
@@ -99,9 +102,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     };
     // Listen for foreground messages
     const unsubscribe = onForegroundMessage(() => {
-  
       fetchUnreadCount();
-      
     });
     fetchUnreadCount();
 
@@ -119,6 +120,48 @@ export function AppLayout({ children }: AppLayoutProps) {
       console.error('Sign out error:', error);
       toast.error('Failed to sign out');
     }
+  };
+  const FONT_OPTIONS = [
+    { name: 'Playfair Display', value: 'font-playfair', class: 'font-playfair', description: 'Elegant serif' },
+    { name: 'Dancing Script', value: 'font-dancing', class: 'font-dancing', description: 'Romantic script' },
+    { name: 'Great Vibes', value: 'font-vibes', class: 'font-vibes', description: 'Flowing script' },
+    { name: 'Cinzel', value: 'font-cinzel', class: 'font-cinzel', description: 'Classic roman' },
+    { name: 'Cormorant Garamond', value: 'font-cormorant', class: 'font-cormorant', description: 'Refined serif' },
+    { name: 'Montserrat', value: 'font-montserrat', class: 'font-montserrat', description: 'Modern sans-serif' },
+    { name: 'Lora', value: 'font-lora', class: 'font-lora', description: 'Contemporary serif' },
+    { name: 'Poppins', value: 'font-poppins', class: 'font-poppins', description: 'Clean geometric' },
+  ];
+  
+  const renderLogo = () => {
+
+    if (!event) {
+      return <h1 className="text-xl font-bold">Heartgram</h1>;
+    }
+
+    if (event.use_logo_text) {
+      
+      return (
+        <h1 
+          className="text-xl font-bold"
+          style={{ 
+            fontFamily: FONT_OPTIONS.find((font)=> font.value === event.font_name)?.name || 'inherit',
+            color: event.primary_color || 'inherit'
+          }}
+        >
+          {event.name}
+        </h1>
+      );
+    } else if (event.logo_url) {
+      return (
+        <img 
+          src={event.logo_url} 
+          alt={event.name}
+          className="h-14 w-auto max-w-[200px] object-contain"
+        />
+      );
+    }
+
+    return <h1 className="text-xl font-bold">Heartgram</h1>;
   };
 
   if (isLoading) {
@@ -158,7 +201,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       {/* Header */}
       <header className="border-b py-3 px-4 sticky top-0 bg-background z-30">
         <div className="container max-w-lg mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-bold">WeddingPost</h1>
+          {renderLogo()}
           
           <div className="flex items-center space-x-2">
             <Button
@@ -174,6 +217,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 <Badge 
                   variant="destructive" 
                   className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                  style={{ backgroundColor: event?.primary_color || undefined }}
                 >
                   {unreadNotifications}
                 </Badge>
@@ -227,6 +271,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             size="icon" 
             className={pathname === '/feed' ? 'text-primary' : 'text-muted-foreground'}
             onClick={() => router.push('/feed')}
+            style={pathname === '/feed' ? { color: event?.primary_color || undefined } : {}}
           >
             <Home size={24} />
           </Button>
@@ -235,6 +280,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             size="icon" 
             className={pathname === '/search' ? 'text-primary' : 'text-muted-foreground'}
             onClick={() => router.push('/search')}
+            style={pathname === '/search' ? { color: event?.primary_color || undefined } : {}}
           >
             <Search size={24} />
           </Button>
@@ -243,6 +289,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             size="icon" 
             className={pathname === '/create' ? 'text-primary' : 'text-muted-foreground'}
             onClick={() => router.push('/create')}
+            style={pathname === '/create' ? { color: event?.primary_color || undefined } : {}}
           >
             <PlusSquare size={24} />
           </Button>
@@ -251,6 +298,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             size="icon" 
             className={pathname === '/notifications' ? 'text-primary' : 'text-muted-foreground'}
             onClick={() => router.push('/notifications')}
+            style={pathname === '/notifications' ? { color: event?.primary_color || undefined } : {}}
           >
             <Heart size={24} />
           </Button>
@@ -259,6 +307,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             size="icon" 
             className={pathname === '/profile' ? 'text-primary' : 'text-muted-foreground'}
             onClick={() => router.push('/profile')}
+            style={pathname === '/profile' ? { color: event?.primary_color || undefined } : {}}
           >
             <User size={24} />
           </Button>
@@ -267,5 +316,3 @@ export function AppLayout({ children }: AppLayoutProps) {
     </div>
   );
 }
-
-

@@ -33,11 +33,7 @@ export async function verifyEventAccess(event_code: string, hashed_password: str
   const event = await Event.findOne({ where: { event_code } });
 
   if (!event) return null;
-  console.log('====================================');
-  console.log(event)
-  console.log(hashed_password);
-  console.log(event.hashed_password);
-  console.log('====================================');
+  
   const passwordValid = await compare(hashed_password, event.hashed_password);
   if (!passwordValid) return null;
 
@@ -51,9 +47,7 @@ export async function signInGuest(email: string, password: string, wedding_event
       wedding_event_id,
     },
   });
-  console.log('====================================');
-  console.log(guest);
-  console.log('====================================');
+  
   if (!guest) {
     throw new Error('Invalid credentials');
   }
